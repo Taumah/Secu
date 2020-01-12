@@ -64,19 +64,19 @@ func run() {
 	fmt.Fprintln(basicText, "Encoder")
 
 	//Texte bouton charger matrice
-	basicText := text.New(pixel.V(p_width*13, p_height*75), basicAtlas)
-	basicText.Color = colornames.Limegreen
-	fmt.Fprintln(basicText, "Charger Matrice")
+	basicText1 := text.New(pixel.V(p_width*13, p_height*75), basicAtlas)
+	basicText1.Color = colornames.Limegreen
+	fmt.Fprintln(basicText1, "Charger Matrice")
 
 	//Texte bouton charger fichier
-	basicText := text.New(pixel.V(p_width*75, p_height*75), basicAtlas)
-	basicText.Color = colornames.Limegreen
-	fmt.Fprintln(basicText, "Charger fichier")
+	basicText2 := text.New(pixel.V(p_width*75, p_height*75), basicAtlas)
+	basicText2.Color = colornames.Limegreen
+	fmt.Fprintln(basicText2, "Charger fichier")
 
 	//Texte bouton decoder
-	basicText := text.New(pixel.V(p_width*75, p_height*18), basicAtlas)
-	basicText.Color = colornames.Limegreen
-	fmt.Fprintln(basicText, "Decoder")
+	basicText3 := text.New(pixel.V(p_width*75, p_height*18), basicAtlas)
+	basicText3.Color = colornames.Limegreen
+	fmt.Fprintln(basicText3, "Decoder")
 
 	// imd.Color = colornames.Limegreen
 	// imd.Color = colornames.Navy
@@ -87,6 +87,9 @@ func run() {
 
 		imd.Draw(win)
 		basicText.Draw(win, pixel.IM)
+		basicText1.Draw(win, pixel.IM)
+		basicText2.Draw(win, pixel.IM)
+		basicText3.Draw(win, pixel.IM)
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
 			button_handler(win)
