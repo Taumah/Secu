@@ -177,6 +177,18 @@ func seekKeyIndex(data []byte) (uint8, uint8) {
 }
 
 func reorderMatrix() {
-	fmt.Printf("%d", len(matrix[0]))
-	fmt.Println(matrix[0])
+	// var i, j uint8
+
+	// var pos_one uint8
+	// var sum uint8 = 0
+
+	// for i = 0; int(i) < len(matrix[0]); i++ {
+	// 	for j = 0; j < 4; j++ {
+
+	// 		if matrix[j][i] == 1 {
+	// 			pos_one = j
+
+	// 		}
+	// 	}
+	// }
 }
