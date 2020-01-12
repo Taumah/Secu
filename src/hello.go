@@ -177,18 +177,25 @@ func seekKeyIndex(data []byte) (uint8, uint8) {
 }
 
 func reorderMatrix() {
-	// var i, j uint8
+	var i, j uint8
 
-	// var pos_one uint8
-	// var sum uint8 = 0
+	var pos_one uint8
+	var sum uint8 = 0
 
-	// for i = 0; int(i) < len(matrix[0]); i++ {
-	// 	for j = 0; j < 4; j++ {
+	var tmp_matrix [][]uint8 = make([][]uint8, 4, 16)
 
-	// 		if matrix[j][i] == 1 {
-	// 			pos_one = j
+	for i = 0; int(i) < len(matrix[0]); i++ {
+		for j = 0; j < 4; j++ {
 
-	// 		}
-	// 	}
-	// }
+			if matrix[j][i] == 1 {
+				pos_one = j
+				sum += matrix[j][i]
+
+			}
+		}
+		if sum == 1 {
+			tmp_matrix = matrix[pos_one]
+		}
+
+	}
 }
