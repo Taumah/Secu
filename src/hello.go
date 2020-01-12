@@ -82,10 +82,10 @@ func run() {
 		win.Clear(colornames.Aliceblue)
 
 		imd.Draw(win)
-		basicText.Draw(win, pixel.IM)
-		basicText1.Draw(win, pixel.IM)
-		basicText2.Draw(win, pixel.IM)
-		basicText3.Draw(win, pixel.IM)
+		basicText.Draw(win, pixel.IM.Scaled(basicText.Orig, 4))
+		basicText1.Draw(win, pixel.IM.Scaled(basicText.Orig, 4))
+		basicText2.Draw(win, pixel.IM.Scaled(basicText.Orig, 4))
+		basicText3.Draw(win, pixel.IM.Scaled(basicText.Orig, 4))
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
 			button_handler(win)
