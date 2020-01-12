@@ -57,11 +57,26 @@ func run() {
 	imd.Rectangle(0)
 
 	basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
-	basicText := text.New(pixel.V(p_width*13, p_height*18), basicAtlas)
-	//change scale
-	basicText.Color = colornames.Limegreen
 
+	//Texte bouton encoder
+	basicText := text.New(pixel.V(p_width*13, p_height*18), basicAtlas)
+	basicText.Color = colornames.Limegreen
 	fmt.Fprintln(basicText, "Encoder")
+
+	//Texte bouton charger matrice
+	basicText := text.New(pixel.V(p_width*13, p_height*75), basicAtlas)
+	basicText.Color = colornames.Limegreen
+	fmt.Fprintln(basicText, "Charger Matrice")
+
+	//Texte bouton charger fichier
+	basicText := text.New(pixel.V(p_width*75, p_height*75), basicAtlas)
+	basicText.Color = colornames.Limegreen
+	fmt.Fprintln(basicText, "Charger fichier")
+
+	//Texte bouton decoder
+	basicText := text.New(pixel.V(p_width*75, p_height*18), basicAtlas)
+	basicText.Color = colornames.Limegreen
+	fmt.Fprintln(basicText, "Decoder")
 
 	// imd.Color = colornames.Limegreen
 	// imd.Color = colornames.Navy
