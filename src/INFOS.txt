@@ -1,0 +1,10 @@
+Certaines fonctions n'ont pas été codées, et une partie du travail doi être fait à la main
+
+-la matrice G4C doit être rentrée dans l'ordre (Identitée au début...)
+-Il n'est pas possible de choisir son fichier, il faut modifier le contenu de file.txt pour chiffrer notre texte
+-même chose pour déchiffrer file.txtc
+
+-le programme semble ne pas chiffrer certains caratères spéciaux, qui mène à un raté du chiffrement 
+
+
+

@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	// "io"
-
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 
@@ -18,6 +16,7 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
+//~~~~~~~~~~~~~~GLOBAL VARIABLES~~~~~~~~~~~~~
 var err error
 
 var WORKING_DIRECTORY string
@@ -32,6 +31,10 @@ var WIDTH float64 = 1100.0
 var HEIGHT float64 = 700.0
 var p_width float64 = WIDTH / 100
 var p_height float64 = HEIGHT / 100
+
+var my_var string = ""
+
+//~~~~~~~~~~~~~~~~~PROGRAM DEBUT~~~~~~~~~~~~~~~~~~~~~~~~~
 
 func run() {
 
@@ -286,47 +289,48 @@ func encrypt_byte(the_bytes []byte, length int) string {
 			i++
 		}
 		tmp_byte = copy_byte + tmp_byte
-
+		//text translated to binary OK
 		bytes[0] = tmp_byte[0:4]
 		bytes[1] = tmp_byte[4:8] // G4C matrix, every int coded on 8bites -> twice 4bits
-
 		copy_byte = ""
 		loop = 0
-		for loop < 2 {
+		for loop < 2 { // len(bytes) = 2 at any run
 			for i = 0; i < len(matrix[0]); i++ {
 
 				sum = 0
 				for j = 0; j < 4; j++ {
 					if matrix[j][i] == 1 && bytes[loop][j] == 49 {
-						sum++
+						sum++ // simulating XOR
 					}
 				}
-				copy_byte += strconv.Itoa(sum % 2)
+				copy_byte += strconv.Itoa(sum % 2) // end XOR
 			}
+
 			loop++
 		}
+		fmt.Printf("%d apres passage donne %s ", the_bytes, copy_byte)
+
 		result += copy_byte
 		copy_byte = ""
 
 		byte_num++
 	}
-	fmt.Println("bfore", result)
+	my_var += result
 	result = longStringToIntString(result)
-	fmt.Println("after", result)
+
 	return result
 
 }
 
 func encrypt_file() {
 	var err = os.Remove(WORKING_DIRECTORY + "/file.txtc") // in case it already exists
-
 	var write_tab string
 	newfile, err := os.Create(WORKING_DIRECTORY + "/file.txtc")
 
 	file, err := os.Open(WORKING_DIRECTORY + "/file.txt") // read from a file write into another
 	check(err)
 
-	current_byte := make([]byte, len(matrix[0]))
+	current_byte := make([]byte, 1)
 	for {
 		//lecture d'un byte
 		read_byte, err := file.Read(current_byte)
@@ -341,7 +345,7 @@ func encrypt_file() {
 		check(err)
 
 	}
-
+	// fmt.Println(my_var)
 	fmt.Println("file encrypted")
 }
 
@@ -349,8 +353,7 @@ func decrypt_file() {
 	var err = os.Remove(WORKING_DIRECTORY + "/file.txtd") // in case it already exists
 	newfile, err := os.Create(WORKING_DIRECTORY + "/file.txtd")
 
-	// var write_byte string
-
+	var write_byte string
 	file, err := os.Open(WORKING_DIRECTORY + "/file.txtc")
 	check(err)
 
@@ -358,25 +361,46 @@ func decrypt_file() {
 
 	for {
 		//lecture d'un byte
+		for i := range read_byte {
+			read_byte[i] = 0
+		}
+
 		decrypt_bytes, err := file.Read(read_byte)
 		if err != nil {
-			break
+			break //reading until we can't anymore (EOF)
 		}
-		decrypt_bytes++
-		// write_byte = decrypt_byte(decrypt_bytes)
-		// tmp, _ := parseHexToBin(string(read_byte))
-		// parseBinToHex(tmp)
+		write_byte = decrypt_byte(read_byte, decrypt_bytes)
 
-		_, err = newfile.WriteString((string(read_byte)))
+		_, err = newfile.WriteString(write_byte)
 		check(err)
 
 	}
-
 	fmt.Println("file decrypted")
 }
 
-func decrypt_byte(the_byte int) {
+func decrypt_byte(the_bytes []byte, length int) string {
+	var i int = 0
+	var concat_bins string = ""
+	var concat_result string = ""
+	for i < length {
+		concat_bins += fmt.Sprintf("%08b", the_bytes[i])
+		i++
+	}
 
+	// fmt.Println(concat_bins)
+
+	i = 0
+	for i < length {
+
+		for j := 0; j < 4; j++ {
+			concat_result += fmt.Sprintf("%c", concat_bins[i*8+j])
+		}
+		i++
+	}
+	result := longStringToIntString(concat_result)
+	// fmt.Println(result)
+
+	return result
 }
 
 func parseBinToChar(s string) string { //smartest result from Stack
@@ -385,12 +409,12 @@ func parseBinToChar(s string) string { //smartest result from Stack
 
 	return fmt.Sprintf("%c", ui)
 }
-func parseHexToBin(hex string) (string, error) { //smartest result from Stack
-	var format string = "%0" + strconv.Itoa(len(matrix[0])*2) + "b"
-	ui, err := strconv.ParseUint(hex, 16, 64)
+func parseIntToBin(Int int64) string { //smartest result from Stack
+	var format string = "%08b"
+	ui := strconv.FormatInt(Int, 2)
 	check(err)
-	// %016b indicates base 2, zero padded, with 16 characters
-	return fmt.Sprintf(format, ui), nil
+	//ex : %016b indicates base 2, zero padded, with 16 characters
+	return fmt.Sprintf(format, ui)
 }
 
 func longStringToIntString(binary string) string {
@@ -400,7 +424,6 @@ func longStringToIntString(binary string) string {
 	var result string = ""
 	var copy string = ""
 	var tmp string
-
 	for i < qty_loops {
 		copy = ""
 		j = 0
@@ -409,9 +432,11 @@ func longStringToIntString(binary string) string {
 			j++
 		}
 		tmp = parseBinToChar(copy)
+		fmt.Printf(tmp)
 		result += tmp
 
 		i++
 	}
+	fmt.Println()
 	return result
 }
