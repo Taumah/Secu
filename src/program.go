@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -271,7 +272,7 @@ func clearMatrix() {
 	}
 }
 
-func encrypt_byte(the_bytes []byte, length int) string {
+func encrypt_byte(the_bytes []byte, length int) []byte {
 	j, byte_num, loop := 0, 0, 0
 	var i int
 
@@ -279,6 +280,9 @@ func encrypt_byte(the_bytes []byte, length int) string {
 	var copy_byte string = ""
 	var bytes [2]string
 	var sum int
+	var str_result []string
+	var result_int uint64
+	var s_int []byte
 
 	for byte_num < length {
 		tmp_byte := strconv.FormatInt(int64(the_bytes[byte_num]), 2)
@@ -307,8 +311,9 @@ func encrypt_byte(the_bytes []byte, length int) string {
 			}
 
 			loop++
+			copy_byte += " "
 		}
-		fmt.Printf("%d apres passage donne %s ", the_bytes, copy_byte)
+		// fmt.Printf("%d apres passage donne %s ", the_bytes, copy_byte)
 
 		result += copy_byte
 		copy_byte = ""
@@ -316,15 +321,25 @@ func encrypt_byte(the_bytes []byte, length int) string {
 		byte_num++
 	}
 	my_var += result
-	result = longStringToIntString(result)
+	str_result = strings.Split(result, " ")
+	i = 0
+	for i < len(str_result)-1 { // removing last element because ther's nothing in
+		fmt.Printf("%s\n", str_result[i])
+		// result += longStringToIntString(str_result[i])
+		result_int, err = strconv.ParseUint(str_result[i], 2, 64)
+		check(err)
+		s_int = append(s_int, byte(result_int))
+		fmt.Printf("%d\n", result_int)
 
-	return result
+		i++
+	}
+	return s_int
 
 }
 
 func encrypt_file() {
 	var err = os.Remove(WORKING_DIRECTORY + "/file.txtc") // in case it already exists
-	var write_tab string
+	var write_tab []byte
 	newfile, err := os.Create(WORKING_DIRECTORY + "/file.txtc")
 
 	file, err := os.Open(WORKING_DIRECTORY + "/file.txt") // read from a file write into another
@@ -341,7 +356,8 @@ func encrypt_file() {
 		//cryptage d'un byte
 		write_tab = encrypt_byte(current_byte, read_byte)
 		//ecriture d'un byte
-		_, err = newfile.WriteString(write_tab)
+		fmt.Printf("%v", write_tab)
+		_, err = newfile.Write(write_tab)
 		check(err)
 
 	}
@@ -432,11 +448,11 @@ func longStringToIntString(binary string) string {
 			j++
 		}
 		tmp = parseBinToChar(copy)
-		fmt.Printf(tmp)
+		// fmt.Printf(tmp)
 		result += tmp
 
 		i++
 	}
-	fmt.Println()
+	// fmt.Println()
 	return result
 }
