@@ -34,6 +34,7 @@ var p_width float64 = WIDTH / 100
 var p_height float64 = HEIGHT / 100
 
 var my_var string = ""
+var matrix_id_order []int = []int{5, 2, 3, 4}
 
 //~~~~~~~~~~~~~~~~~PROGRAM DEBUT~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -193,19 +194,19 @@ func insertMatrix(file []byte, index uint8, endex uint8) {
 	}
 	fmt.Printf("%v", matrix)
 
-	var j uint8 = 0
-	var k uint8 = 1
-	var result uint8
-	for k < 4 {
-		for j < 8 {
-			result = matrix[0][j] ^ matrix[k][j]
-			matrix[k][j] = result
-			j++
-		}
-		k++
-		j = 0
-	}
-	fmt.Printf("\n%v", matrix)
+	// var j uint8 = 0
+	// var k uint8 = 1
+	// var result uint8
+	// for k < 4 {
+	// 	for j < 8 {
+	// 		result = matrix[0][j] ^ matrix[k][j]
+	// 		matrix[k][j] = result
+	// 		j++
+	// 	}
+	// 	k++
+	// 	j = 0
+	// }
+	// fmt.Printf("\n%v", matrix)
 }
 
 func check(e error) {
@@ -339,12 +340,12 @@ func encrypt_byte(the_bytes []byte, length int) []byte {
 	str_result = strings.Split(result, " ")
 	i = 0
 	for i < len(str_result)-1 { // removing last element because ther's nothing in
-		fmt.Printf("%s\n", str_result[i])
+		// fmt.Printf("%s\n", str_result[i])
 		// result += longStringToIntString(str_result[i])
 		result_int, err = strconv.ParseUint(str_result[i], 2, 64)
 		check(err)
 		s_int = append(s_int, byte(result_int))
-		fmt.Printf("%d\n", result_int)
+		// fmt.Printf("%d\n", result_int)
 
 		i++
 	}
@@ -373,7 +374,7 @@ func encrypt_file() {
 		//cryptage d'un byte
 		write_tab = encrypt_byte(current_byte, read_byte)
 		//ecriture d'un byte
-		fmt.Printf("%v", write_tab)
+		// fmt.Printf("%v", write_tab)
 		_, err = newfile.Write(write_tab)
 		check(err)
 
@@ -399,6 +400,9 @@ func decrypt_file() {
 		}
 
 		decrypt_bytes, err := file.Read(read_byte)
+
+		fmt.Println(read_byte)
+
 		if err != nil {
 			break //reading until we can't anymore (EOF)
 		}
@@ -415,22 +419,31 @@ func decrypt_byte(the_bytes []byte, length int) string {
 	var i int = 0
 	var concat_bins string = ""
 	var concat_result string = ""
+	var tmp_byte string
 	for i < length {
-		concat_bins += fmt.Sprintf("%08b", the_bytes[i])
+		tmp_byte = fmt.Sprintf("%08b", the_bytes[i])
+
+		tmp_byte = string(tmp_byte[4:5]) + string(tmp_byte[1:2]) + string(tmp_byte[2:3]) + string(tmp_byte[3:4])
+
+		fmt.Printf("string: %d", the_bytes[i])
+		fmt.Printf("%s \n", tmp_byte)
+		concat_result += tmp_byte
 		i++
 	}
 
-	// fmt.Println(concat_bins)
+	// fmt.Printf("%s  ", concat_bins)
+	// fmt.Printf("\n\n")
 
+	fmt.Printf("result : %s", concat_result)
 	i = 0
 	for i < length {
 
 		for j := 0; j < 4; j++ {
-			concat_result += fmt.Sprintf("%c", concat_bins[i*8+j])
+			concat_bins += fmt.Sprintf("%c", concat_result[i*4+j])
 		}
 		i++
 	}
-	result := longStringToIntString(concat_result)
+	result := longStringToIntString(concat_bins)
 	// fmt.Println(result)
 
 	return result
