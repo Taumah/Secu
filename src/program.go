@@ -387,7 +387,7 @@ func decrypt_file() {
 	var err = os.Remove(WORKING_DIRECTORY + "/file.txtd") // in case it already exists
 	newfile, err := os.Create(WORKING_DIRECTORY + "/file.txtd")
 
-	var write_byte string
+	var write_byte []byte
 	file, err := os.Open(WORKING_DIRECTORY + "/file.txtc")
 	check(err)
 
@@ -407,46 +407,57 @@ func decrypt_file() {
 			break //reading until we can't anymore (EOF)
 		}
 		write_byte = decrypt_byte(read_byte, decrypt_bytes)
-
-		_, err = newfile.WriteString(write_byte)
+		_, err = newfile.Write(write_byte)
 		check(err)
 
 	}
 	fmt.Println("file decrypted")
 }
 
-func decrypt_byte(the_bytes []byte, length int) string {
+func decrypt_byte(the_bytes []byte, length int) []byte {
 	var i int = 0
-	var concat_bins string = ""
 	var concat_result string = ""
 	var tmp_byte string
+
+	var s_int []byte
+
 	for i < length {
 		tmp_byte = fmt.Sprintf("%08b", the_bytes[i])
 
 		tmp_byte = string(tmp_byte[4:5]) + string(tmp_byte[1:2]) + string(tmp_byte[2:3]) + string(tmp_byte[3:4])
 
-		fmt.Printf("string: %d", the_bytes[i])
-		fmt.Printf("%s \n", tmp_byte)
 		concat_result += tmp_byte
+		if i%2 == 1 {
+			concat_result += " "
+		}
 		i++
 	}
 
 	// fmt.Printf("%s  ", concat_bins)
 	// fmt.Printf("\n\n")
 
-	fmt.Printf("result : %s", concat_result)
+	fmt.Printf("result : %s\n", concat_result)
 	i = 0
-	for i < length {
+	// for i < length {
 
-		for j := 0; j < 4; j++ {
-			concat_bins += fmt.Sprintf("%c", concat_result[i*4+j])
-		}
+	// 	for j := 0; j < 4; j++ {
+	// 		concat_bins += fmt.Sprintf("%c ", concat_result[i*4+j])
+	// 	}
+	// 	i++
+	// }
+	str_result := strings.Split(concat_result, " ")
+	i = 0
+	for i < len(str_result)-1 { // removing last element because ther's nothing in
+		// fmt.Printf("%s\n", str_result[i])
+		// result += longStringToIntString(str_result[i])
+		result_int, err := strconv.ParseUint(str_result[i], 2, 64)
+		check(err)
+		s_int = append(s_int, byte(result_int))
+		// fmt.Printf("%d\n", result_int)
+
 		i++
 	}
-	result := longStringToIntString(concat_bins)
-	// fmt.Println(result)
-
-	return result
+	return s_int
 }
 
 func parseBinToChar(s string) string { //smartest result from Stack
