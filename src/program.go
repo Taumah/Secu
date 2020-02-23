@@ -128,7 +128,7 @@ func button_handler(win *pixelgl.Window) {
 
 			data, err := os.Open(USED_FILE)
 			check(err)
-
+			fmt.Printf("Matrice insérée \n")
 			txt := make([]byte, 100)
 			txt_len, err := data.Read(txt)
 			txt_len++
@@ -171,6 +171,7 @@ func selectFile() {
 	txt := make([]byte, 100)
 	_, err = data.Read(txt)
 	SELECT_file = true
+	fmt.Printf("file selected \n")
 }
 
 func insertMatrix(file []byte, index uint8, endex uint8) {
@@ -359,6 +360,8 @@ func encrypt_file() {
 	file, err := os.Open(WORKING_DIRECTORY + "/file.txt") // read from a file write into another
 	check(err)
 
+	/* 	write_tab = []byte{126}
+	   	_, err = newfile.Write(write_tab) */ //permet de rentrer à la main 1 char , pour voir les effets
 	current_byte := make([]byte, 1)
 	for {
 		//lecture d'un byte
