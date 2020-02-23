@@ -144,6 +144,8 @@ func button_handler(win *pixelgl.Window) {
 			if SELECT_file && SELECT_matrix {
 				decrypt_file()
 				//TODO
+			} else {
+				fmt.Println("You need to load matrix and file first")
 			}
 		}
 	} else {
@@ -158,6 +160,8 @@ func button_handler(win *pixelgl.Window) {
 				if SELECT_file && SELECT_matrix {
 					encrypt_file()
 
+				} else {
+					fmt.Println("You need to load matrix and file first")
 				}
 			}
 		}
