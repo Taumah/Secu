@@ -192,10 +192,24 @@ func insertMatrix(file []byte, index uint8, endex uint8) {
 			i++   //we jump over the space char
 		}
 		matrix[x] = append(matrix[x], (file[i])-48)
-
 		y++
 		i++
 	}
+	fmt.Printf("%v", matrix)
+
+	var j uint8 = 0
+	var k uint8 = 1
+	var result uint8
+	for k < 4 {
+		for j < 8 {
+			result = matrix[0][j] ^ matrix[k][j]
+			matrix[k][j] = result
+			j++
+		}
+		k++
+		j = 0
+	}
+	fmt.Printf("\n%v", matrix)
 }
 
 func check(e error) {
