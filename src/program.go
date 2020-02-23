@@ -399,27 +399,14 @@ func decrypt_file() {
 
 	read_byte := make([]byte, int(fi.Size()))
 
-	for {
-		//lecture d'un byte
-		for i := range read_byte {
-			read_byte[i] = 0
-		}
+	decrypt_bytes, err := file.Read(read_byte)
 
-		decrypt_bytes, err := file.Read(read_byte)
+	fmt.Println(read_byte)
 
-		fmt.Println(read_byte)
+	write_byte = decrypt_byte(read_byte, decrypt_bytes)
+	_, err = newfile.Write(write_byte)
+	check(err)
 
-		if err != nil {
-			break //reading until we can't anymore (EOF)
-		}
-		write_byte = decrypt_byte(read_byte, decrypt_bytes)
-		_, err = newfile.Write(write_byte)
-		check(err)
-
-		if decrypt_bytes < len(read_byte) {
-			break
-		}
-	}
 	fmt.Println("file decrypted")
 	newfile.Close()
 	file.Close()
@@ -443,29 +430,14 @@ func decrypt_byte(the_bytes []byte, length int) []byte {
 		}
 		i++
 	}
-
-	// fmt.Printf("%s  ", concat_bins)
-	// fmt.Printf("\n\n")
-
-	fmt.Printf("result : %s\n", concat_result)
 	i = 0
-	// for i < length {
 
-	// 	for j := 0; j < 4; j++ {
-	// 		concat_bins += fmt.Sprintf("%c ", concat_result[i*4+j])
-	// 	}
-	// 	i++
-	// }
 	str_result := strings.Split(concat_result, " ")
 	i = 0
 	for i < len(str_result)-1 { // removing last element because ther's nothing in
-		// fmt.Printf("%s\n", str_result[i])
-		// result += longStringToIntString(str_result[i])
 		result_int, err := strconv.ParseUint(str_result[i], 2, 64)
 		check(err)
 		s_int = append(s_int, byte(result_int))
-		// fmt.Printf("%d\n", result_int)
-
 		i++
 	}
 	return s_int
