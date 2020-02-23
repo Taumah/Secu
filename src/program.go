@@ -171,6 +171,8 @@ func selectFile() {
 
 	txt := make([]byte, 100)
 	_, err = data.Read(txt)
+
+	fmt.Printf("data : ", txt)
 	SELECT_file = true
 	fmt.Printf("file selected \n")
 }
@@ -391,7 +393,7 @@ func decrypt_file() {
 	file, err := os.Open(WORKING_DIRECTORY + "/file.txtc")
 	check(err)
 
-	read_byte := make([]byte, len(matrix[0])*2)
+	read_byte := make([]byte, len(matrix[0])*2*100)
 
 	for {
 		//lecture d'un byte
@@ -410,8 +412,14 @@ func decrypt_file() {
 		_, err = newfile.Write(write_byte)
 		check(err)
 
+		if decrypt_bytes < len(read_byte) {
+			break
+		}
+
 	}
 	fmt.Println("file decrypted")
+	newfile.Close()
+	file.Close()
 }
 
 func decrypt_byte(the_bytes []byte, length int) []byte {
@@ -466,6 +474,7 @@ func parseBinToChar(s string) string { //smartest result from Stack
 
 	return fmt.Sprintf("%c", ui)
 }
+
 func parseIntToBin(Int int64) string { //smartest result from Stack
 	var format string = "%08b"
 	ui := strconv.FormatInt(Int, 2)
@@ -474,26 +483,26 @@ func parseIntToBin(Int int64) string { //smartest result from Stack
 	return fmt.Sprintf(format, ui)
 }
 
-func longStringToIntString(binary string) string {
-	var qty_loops int = len(binary) / 8
-	var i, j int = 0, 0
+// func longStringToIntString(binary string) string {
+// 	var qty_loops int = len(binary) / 8
+// 	var i, j int = 0, 0
 
-	var result string = ""
-	var copy string = ""
-	var tmp string
-	for i < qty_loops {
-		copy = ""
-		j = 0
-		for j < 8 {
-			copy += string(binary[i*8+j])
-			j++
-		}
-		tmp = parseBinToChar(copy)
-		// fmt.Printf(tmp)
-		result += tmp
+// 	var result string = ""
+// 	var copy string = ""
+// 	var tmp string
+// 	for i < qty_loops {
+// 		copy = ""
+// 		j = 0
+// 		for j < 8 {
+// 			copy += string(binary[i*8+j])
+// 			j++
+// 		}
+// 		tmp = parseBinToChar(copy)
+// 		// fmt.Printf(tmp)
+// 		result += tmp
 
-		i++
-	}
-	// fmt.Println()
-	return result
-}
+// 		i++
+// 	}
+// 	// fmt.Println()
+// 	return result
+// }
