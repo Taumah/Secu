@@ -391,9 +391,13 @@ func decrypt_file() {
 
 	var write_byte []byte
 	file, err := os.Open(WORKING_DIRECTORY + "/file.txtc")
+
+	fi, err := file.Stat()
+	fmt.Printf("file size : %d\n", fi.Size())
+
 	check(err)
 
-	read_byte := make([]byte, len(matrix[0])*2*100)
+	read_byte := make([]byte, int(fi.Size()))
 
 	for {
 		//lecture d'un byte
@@ -415,7 +419,6 @@ func decrypt_file() {
 		if decrypt_bytes < len(read_byte) {
 			break
 		}
-
 	}
 	fmt.Println("file decrypted")
 	newfile.Close()
