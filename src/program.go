@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,29 +21,39 @@ import (
 //~~~~~~~~~~~~~~GLOBAL VARIABLES~~~~~~~~~~~~~
 var err error
 
-var WORKING_DIRECTORY string
-var USED_FILE string
+// WorkingDirectory created on start , describes the folder where the program is
+var WorkingDirectory string
 
-var SELECT_file bool = false
-var SELECT_matrix bool = false
+// UsedFile describes path to matrix file
+var UsedFile string
+
+// IsFileSelected  => if statement on graphic app , make sure a file is selected before decrypting it
+var IsFileSelected bool = false
+
+// IsMatrixSelected => if statement on graphic app , make sure a matrix is selected before decrypting files
+var IsMatrixSelected bool = false
 
 var matrix [][]uint8 = make([][]uint8, 4, 16)
 
+//WIDTH screen's width
 var WIDTH float64 = 1100.0
-var HEIGHT float64 = 700.0
-var p_width float64 = WIDTH / 100
-var p_height float64 = HEIGHT / 100
 
-var my_var string = ""
-var matrix_id_order []int = []int{5, 2, 3, 4}
+//HEIGHT screen's height
+var HEIGHT float64 = 700.0
+
+var pWidth float64 = WIDTH / 100
+var pHeight float64 = HEIGHT / 100
+
+//MatrixIDOrder array representing which bits to extract from byte
+var MatrixIDOrder []int = []int{5, 2, 3, 4}
 
 //~~~~~~~~~~~~~~~~~PROGRAM DEBUT~~~~~~~~~~~~~~~~~~~~~~~~~
 
 func run() {
 
-	WORKING_DIRECTORY, err = os.Executable()
+	WorkingDirectory, err = os.Executable()
 	check(err)
-	WORKING_DIRECTORY = filepath.Dir(WORKING_DIRECTORY)
+	WorkingDirectory = filepath.Dir(WorkingDirectory)
 
 	imd := imdraw.New(nil)
 
@@ -58,38 +69,38 @@ func run() {
 	//~~~~~~~~~~~~~~~~~~~~~~~DESSIN DES BOUTONS~~~~~~~~~~~~~~~~~~~~~~~
 	imd.Color = colornames.Navy
 
-	imd.Push(pixel.V(p_width*5, p_height*5), pixel.V(p_width*35, p_height*35)) // vertices for rect1 (bottom left)
+	imd.Push(pixel.V(pWidth*5, pHeight*5), pixel.V(pWidth*35, pHeight*35)) // vertices for rect1 (bottom left)
 	imd.Rectangle(0)
 
-	imd.Push(pixel.V(p_width*95, p_height*5), pixel.V(p_width*65, p_height*35)) // bottom right
+	imd.Push(pixel.V(pWidth*95, pHeight*5), pixel.V(pWidth*65, pHeight*35)) // bottom right
 	imd.Rectangle(0)
 
-	imd.Push(pixel.V(p_width*5, p_height*95), pixel.V(p_width*35, p_height*65)) // top left
+	imd.Push(pixel.V(pWidth*5, pHeight*95), pixel.V(pWidth*35, pHeight*65)) // top left
 	imd.Rectangle(0)
 
-	imd.Push(pixel.V(p_width*95, p_height*95), pixel.V(p_width*65, p_height*65)) //(top right)
+	imd.Push(pixel.V(pWidth*95, pHeight*95), pixel.V(pWidth*65, pHeight*65)) //(top right)
 	imd.Rectangle(0)
 	//~~~~~~~~~~~~~~~~~~~~~~~ECRITURE DES TEXTES~~~~~~~~~~~~~~~~~~~~~~
 
 	basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 
 	//Texte bouton charger matrice
-	basicText := text.New(pixel.V(p_width*13, p_height*18), basicAtlas)
+	basicText := text.New(pixel.V(pWidth*13, pHeight*18), basicAtlas)
 	basicText.Color = colornames.Limegreen
 	fmt.Fprintln(basicText, "Charger Matrice")
 
 	//Texte bouton Décoder
-	basicText1 := text.New(pixel.V(p_width*13, p_height*75), basicAtlas)
+	basicText1 := text.New(pixel.V(pWidth*13, pHeight*75), basicAtlas)
 	basicText1.Color = colornames.Limegreen
 	fmt.Fprintln(basicText1, "Charger fichier")
 
 	//Texte bouton encoder
-	basicText2 := text.New(pixel.V(p_width*75, p_height*75), basicAtlas)
+	basicText2 := text.New(pixel.V(pWidth*75, pHeight*75), basicAtlas)
 	basicText2.Color = colornames.Limegreen
 	fmt.Fprintln(basicText2, "Encoder")
 
 	//Texte bouton Charger fichier
-	basicText3 := text.New(pixel.V(p_width*75, p_height*18), basicAtlas)
+	basicText3 := text.New(pixel.V(pWidth*75, pHeight*18), basicAtlas)
 	basicText3.Color = colornames.Limegreen
 	fmt.Fprintln(basicText3, "Decoder")
 
@@ -105,7 +116,7 @@ func run() {
 		basicText3.Draw(win, pixel.IM)
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
-			button_handler(win)
+			buttonHandler(win)
 		}
 
 		win.Update()
@@ -116,48 +127,47 @@ func main() {
 	pixelgl.Run(run)
 }
 
-func button_handler(win *pixelgl.Window) {
+func buttonHandler(win *pixelgl.Window) {
 
 	pos := win.MousePosition()
 
-	if pos.Y > p_height*5 && pos.Y < p_height*35 { // clic bot
+	if pos.Y > pHeight*5 && pos.Y < pHeight*35 { // clic bot
 
-		if pos.X > p_width*5 && pos.X < p_width*35 { // bot left
+		if pos.X > pWidth*5 && pos.X < pWidth*35 { // bot left
 			//insert matrix
 			var index, endex uint8
-			USED_FILE = WORKING_DIRECTORY + "/matrix.txt"
+			UsedFile = WorkingDirectory + "/matrix.txt"
 
-			data, err := os.Open(USED_FILE)
+			data, err := os.Open(UsedFile)
 			check(err)
 			fmt.Printf("Matrice insérée \n")
 			txt := make([]byte, 100)
-			txt_len, err := data.Read(txt)
-			txt_len++
+			_, err = data.Read(txt)
 			check(err)
 
 			index, endex = seekKeyIndex(txt)
 			insertMatrix(txt, index, endex)
 			// reorderMatrix()
 
-			SELECT_matrix = true
-		} else if pos.X > p_width*65 && pos.X < p_width*95 { // bot right
+			IsMatrixSelected = true
+		} else if pos.X > pWidth*65 && pos.X < pWidth*95 { // bot right
 			//decrypt
-			if SELECT_file && SELECT_matrix {
-				decrypt_file()
+			if IsFileSelected && IsMatrixSelected {
+				decryptFile()
 				//TODO
 			}
 		}
 	} else {
-		if pos.Y < p_height*95 && pos.Y > p_height*35 { // top
+		if pos.Y < pHeight*95 && pos.Y > pHeight*35 { // top
 
-			if pos.X > p_width*5 && pos.X < p_width*35 { //top left
+			if pos.X > pWidth*5 && pos.X < pWidth*35 { //top left
 				//insert file
 				//by default file.txt
 				selectFile()
-			} else if pos.X > p_width*65 && pos.X < p_width*95 { //top right
+			} else if pos.X > pWidth*65 && pos.X < pWidth*95 { //top right
 				//encrypt
-				if SELECT_file && SELECT_matrix {
-					encrypt_file()
+				if IsFileSelected && IsMatrixSelected {
+					encryptFile()
 
 				}
 			}
@@ -166,14 +176,10 @@ func button_handler(win *pixelgl.Window) {
 }
 
 func selectFile() {
-	data, err := os.Open(WORKING_DIRECTORY + "/file.txt")
+	_, err := os.Open(WorkingDirectory + "/file.txt")
 	check(err)
 
-	txt := make([]byte, 100)
-	_, err = data.Read(txt)
-
-	fmt.Printf("data : ", txt)
-	SELECT_file = true
+	IsFileSelected = true
 	fmt.Printf("file selected \n")
 }
 
@@ -194,7 +200,7 @@ func insertMatrix(file []byte, index uint8, endex uint8) {
 		y++
 		i++
 	}
-	fmt.Printf("%v", matrix)
+	// fmt.Printf("%v", matrix)
 
 	// var j uint8 = 0
 	// var k uint8 = 1
@@ -233,54 +239,6 @@ func seekKeyIndex(data []byte) (uint8, uint8) {
 
 }
 
-func reorderMatrix() {
-	var i, j uint8
-
-	var pos_one uint8
-	var sum uint8 = 0
-
-	var tmp_matrix []uint8 = make([]uint8, len(matrix[0]))
-	var tmp_col []uint8 = make([]uint8, 4)
-
-	for i = 0; int(i) < len(matrix[0]); i++ { // we know the index of identity matrix cols
-		sum = 0
-		for j = 0; j < 4; j++ {
-
-			if matrix[j][i] == 1 {
-				pos_one = j
-				sum += matrix[j][i]
-			}
-
-		}
-		if sum == 1 {
-			tmp_matrix[pos_one] = i
-		}
-	}
-
-	tmp_col = tmp_col[:0]
-	for j = 0; int(j) < 4; j++ { // 4 : G4 ID matrix length
-		for i = 0; i < 4; i++ {
-
-			tmp_col = append(tmp_col, matrix[i][j]) //  saving current col in order to swap them in right order
-		}
-
-		for i = 0; i < 4; i++ {
-
-			matrix[i][j] = matrix[i][tmp_matrix[j]]
-		}
-
-		for i = 0; i < 4; i++ {
-
-			matrix[i][tmp_matrix[j]] = tmp_col[i]
-		}
-
-		tmp_col = tmp_col[:0]
-
-	}
-
-	// var matrix is now in order
-}
-
 func clearMatrix() {
 	var i uint8 = 0
 
@@ -290,31 +248,31 @@ func clearMatrix() {
 	}
 }
 
-func encrypt_byte(the_bytes []byte, length int) []byte {
-	j, byte_num, loop := 0, 0, 0
+func encryptByte(theBytes []byte, length int) []byte {
+	j, byteNum, loop := 0, 0, 0
 	var i int
 
 	var result string = ""
-	var copy_byte string = ""
+	var copyByte string = ""
 	var bytes [2]string
 	var sum int
-	var str_result []string
-	var result_int uint64
-	var s_int []byte
+	var strResult []string
+	var resultInt uint64
+	var sInt []byte
 
-	for byte_num < length {
-		tmp_byte := strconv.FormatInt(int64(the_bytes[byte_num]), 2)
-		i = len(tmp_byte)
+	for byteNum < length {
+		tmpByte := strconv.FormatInt(int64(theBytes[byteNum]), 2)
+		i = len(tmpByte)
 
 		for i < 8 {
-			copy_byte += "0" // all bytes set to length 8
+			copyByte += "0" // all bytes set to length 8
 			i++
 		}
-		tmp_byte = copy_byte + tmp_byte
+		tmpByte = copyByte + tmpByte
 		//text translated to binary OK
-		bytes[0] = tmp_byte[0:4]
-		bytes[1] = tmp_byte[4:8] // G4C matrix, every int coded on 8bites -> twice 4bits
-		copy_byte = ""
+		bytes[0] = tmpByte[0:4]
+		bytes[1] = tmpByte[4:8] // G4C matrix, every int coded on 8bites -> twice 4bits
+		copyByte = ""
 		loop = 0
 		for loop < 2 { // len(bytes) = 2 at any run
 			for i = 0; i < len(matrix[0]); i++ {
@@ -325,122 +283,130 @@ func encrypt_byte(the_bytes []byte, length int) []byte {
 						sum++ // simulating XOR
 					}
 				}
-				copy_byte += strconv.Itoa(sum % 2) // end XOR
+				copyByte += strconv.Itoa(sum % 2) // end XOR
 			}
 
 			loop++
-			copy_byte += " "
+			copyByte += " "
 		}
 		// fmt.Printf("%d apres passage donne %s ", the_bytes, copy_byte)
 
-		result += copy_byte
-		copy_byte = ""
+		result += copyByte
+		copyByte = ""
 
-		byte_num++
+		byteNum++
 	}
-	my_var += result
-	str_result = strings.Split(result, " ")
+	strResult = strings.Split(result, " ")
 	i = 0
-	for i < len(str_result)-1 { // removing last element because ther's nothing in
-		// fmt.Printf("%s\n", str_result[i])
-		// result += longStringToIntString(str_result[i])
-		result_int, err = strconv.ParseUint(str_result[i], 2, 64)
+	for i < len(strResult)-1 { // removing last element because ther's nothing in
+		// fmt.Printf("%s\n", strResult[i])
+		// result += longStringToIntString(strResult[i])
+		resultInt, err = strconv.ParseUint(strResult[i], 2, 64)
 		check(err)
-		s_int = append(s_int, byte(result_int))
-		// fmt.Printf("%d\n", result_int)
+		sInt = append(sInt, byte(resultInt))
+		// fmt.Printf("%d\n", resultInt)
 
 		i++
 	}
-	return s_int
+	return sInt
 
 }
 
-func encrypt_file() {
-	var err = os.Remove(WORKING_DIRECTORY + "/file.txtc") // in case it already exists
-	var write_tab []byte
-	newfile, err := os.Create(WORKING_DIRECTORY + "/file.txtc")
+func encryptFile() {
+	var err = os.Remove(WorkingDirectory + "/file.txtc") // in case it already exists
+	var writeTab []byte
+	newfile, err := os.Create(WorkingDirectory + "/file.txtc")
 
-	file, err := os.Open(WORKING_DIRECTORY + "/file.txt") // read from a file write into another
+	file, err := os.Open(WorkingDirectory + "/file.txt") // read from a file write into another
 	check(err)
 
 	/* 	write_tab = []byte{126}
 	   	_, err = newfile.Write(write_tab) */ //permet de rentrer à la main 1 char , pour voir les effets
-	current_byte := make([]byte, 1)
+	currentByte := make([]byte, 1)
 	for {
 		//lecture d'un byte
-		read_byte, err := file.Read(current_byte)
+		readByte, err := file.Read(currentByte)
 		if err != nil {
 			break
 		}
 
 		//cryptage d'un byte
-		write_tab = encrypt_byte(current_byte, read_byte)
+		writeTab = encryptByte(currentByte, readByte)
 		//ecriture d'un byte
 		// fmt.Printf("%v", write_tab)
-		_, err = newfile.Write(write_tab)
+		_, err = newfile.Write(writeTab)
 		check(err)
 
 	}
-	// fmt.Println(my_var)
 	fmt.Println("file encrypted")
 }
 
-func decrypt_file() {
-	var err = os.Remove(WORKING_DIRECTORY + "/file.txtd") // in case it already exists
-	newfile, err := os.Create(WORKING_DIRECTORY + "/file.txtd")
-
-	var write_byte []byte
-	file, err := os.Open(WORKING_DIRECTORY + "/file.txtc")
+func decryptFile() {
+	var err = os.Remove(WorkingDirectory + "/file.txtd") // in case it already exists
+	// var write_byte []byte
+	file, err := os.Open(WorkingDirectory + "/file.txtc")
 
 	fi, err := file.Stat()
 	fmt.Printf("file size : %d\n", fi.Size())
 
 	check(err)
 
-	read_byte := make([]byte, int(fi.Size()))
+	readByte := bufio.NewReaderSize(file, int(fi.Size()))
 
-	decrypt_bytes, err := file.Read(read_byte)
+	decryptByte(readByte, int(fi.Size()))
 
-	fmt.Println(read_byte)
-
-	write_byte = decrypt_byte(read_byte, decrypt_bytes)
-	_, err = newfile.Write(write_byte)
-	check(err)
+	// _, err = newfile.Write(write_byte)
+	// check(err)
 
 	fmt.Println("file decrypted")
-	newfile.Close()
 	file.Close()
+
 }
 
-func decrypt_byte(the_bytes []byte, length int) []byte {
+func decryptByte(reader *bufio.Reader, size int) {
+
+	newfile, err := os.Create(WorkingDirectory + "/file.txtd")
+	writeBytes := bufio.NewWriterSize(newfile, size/2)
+
 	var i int = 0
-	var concat_result string = ""
-	var tmp_byte string
+	var concatResult string = ""
+	var tmpByte string
 
-	var s_int []byte
+	var leByte byte
 
-	for i < length {
-		tmp_byte = fmt.Sprintf("%08b", the_bytes[i])
+	var writtenByte uint8
+	for i < size {
+		leByte, err = reader.ReadByte()
 
-		tmp_byte = string(tmp_byte[4:5]) + string(tmp_byte[1:2]) + string(tmp_byte[2:3]) + string(tmp_byte[3:4])
+		tmpByte = fmt.Sprintf("%08b", leByte)
 
-		concat_result += tmp_byte
+		tmpByte = string(tmpByte[4:5]) + string(tmpByte[1:2]) + string(tmpByte[2:3]) + string(tmpByte[3:4])
+
+		concatResult += tmpByte
 		if i%2 == 1 {
-			concat_result += " "
+			writtenByte, _ = parseByte(concatResult)
+
+			writeBytes.WriteByte(writtenByte)
+			check(err)
+			concatResult = ""
+
 		}
 		i++
 	}
-	i = 0
+	// strResult := strings.Split(concat_result, " ")
+	// i = 0
+	// for i < len(strResult)-1 { // removing last element because ther's nothing in
+	// 	resultInt, err := strconv.ParseUint(strResult[i], 2, 64)
+	// 	check(err)
+	// 	s_int = append(s_int, byte(resultInt))
+	// 	i++
+	// }
+	// fmt.Println(s_int)
+	// _, err = newfile.Write(s_int)
+	// check(err)
+	writeBytes.Flush()
+	newfile.Close()
 
-	str_result := strings.Split(concat_result, " ")
-	i = 0
-	for i < len(str_result)-1 { // removing last element because ther's nothing in
-		result_int, err := strconv.ParseUint(str_result[i], 2, 64)
-		check(err)
-		s_int = append(s_int, byte(result_int))
-		i++
-	}
-	return s_int
 }
 
 func parseBinToChar(s string) string { //smartest result from Stack
@@ -456,6 +422,12 @@ func parseIntToBin(Int int64) string { //smartest result from Stack
 	check(err)
 	//ex : %016b indicates base 2, zero padded, with 16 characters
 	return fmt.Sprintf(format, ui)
+}
+
+func parseByte(intStr string) (retV uint8, err error) {
+	var value int64
+	value, err = strconv.ParseInt(intStr, 2, 8)
+	return byte(value), err
 }
 
 // func longStringToIntString(binary string) string {
@@ -480,4 +452,52 @@ func parseIntToBin(Int int64) string { //smartest result from Stack
 // 	}
 // 	// fmt.Println()
 // 	return result
+// }
+
+// func reorderMatrix() {
+// 	var i, j uint8
+
+// 	var pos_one uint8
+// 	var sum uint8 = 0
+
+// 	var tmp_matrix []uint8 = make([]uint8, len(matrix[0]))
+// 	var tmp_col []uint8 = make([]uint8, 4)
+
+// 	for i = 0; int(i) < len(matrix[0]); i++ { // we know the index of identity matrix cols
+// 		sum = 0
+// 		for j = 0; j < 4; j++ {
+
+// 			if matrix[j][i] == 1 {
+// 				pos_one = j
+// 				sum += matrix[j][i]
+// 			}
+
+// 		}
+// 		if sum == 1 {
+// 			tmp_matrix[pos_one] = i
+// 		}
+// 	}
+
+// 	tmp_col = tmp_col[:0]
+// 	for j = 0; int(j) < 4; j++ { // 4 : G4 ID matrix length
+// 		for i = 0; i < 4; i++ {
+
+// 			tmp_col = append(tmp_col, matrix[i][j]) //  saving current col in order to swap them in right order
+// 		}
+
+// 		for i = 0; i < 4; i++ {
+
+// 			matrix[i][j] = matrix[i][tmp_matrix[j]]
+// 		}
+
+// 		for i = 0; i < 4; i++ {
+
+// 			matrix[i][tmp_matrix[j]] = tmp_col[i]
+// 		}
+
+// 		tmp_col = tmp_col[:0]
+
+// 	}
+
+// 	// var matrix is now in order
 // }
