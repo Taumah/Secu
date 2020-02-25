@@ -205,21 +205,6 @@ func insertMatrix(file []byte, index uint8, endex uint8) {
 		y++
 		i++
 	}
-	// fmt.Printf("%v", matrix)
-
-	// var j uint8 = 0
-	// var k uint8 = 1
-	// var result uint8
-	// for k < 4 {
-	// 	for j < 8 {
-	// 		result = matrix[0][j] ^ matrix[k][j]
-	// 		matrix[k][j] = result
-	// 		j++
-	// 	}
-	// 	k++
-	// 	j = 0
-	// }
-	// fmt.Printf("\n%v", matrix)
 }
 
 func check(e error) {
@@ -371,7 +356,7 @@ func decryptFile() {
 func decryptByte(reader *bufio.Reader, size int) {
 
 	newfile, err := os.Create(WorkingDirectory + "/file.txtd")
-	writeBytes := bufio.NewWriterSize(newfile, (size+10)/2)
+	writeBytes := bufio.NewWriter(newfile)
 
 	var i int = 0
 	var concatResult string = ""
@@ -386,8 +371,9 @@ func decryptByte(reader *bufio.Reader, size int) {
 
 		tmpByte = fmt.Sprintf("%08b", leByte)
 
-		tmpByte = string(tmpByte[4:5]) + string(tmpByte[1:2]) + string(tmpByte[2:3]) + string(tmpByte[3:4])
+		tmpByte = string(tmpByte[4]) + string(tmpByte[1]) + string(tmpByte[2]) + string(tmpByte[3])
 
+		leByte = (leByte&8)*2**3 + (leByte&64)*2**6 + (leByte&32)*2**5 + (leByte&16)*2**4
 		//ideally this should be this ligne to adapt to any matrix .... bit long :/
 		// tmpByte = string(tmpByte[MatrixIDOrder[0]]) + string(tmpByte[MatrixIDOrder[1]]) + string(tmpByte[MatrixIDOrder[2]]) + string(tmpByte[MatrixIDOrder[3]])
 
@@ -402,17 +388,7 @@ func decryptByte(reader *bufio.Reader, size int) {
 		}
 		i++
 	}
-	// strResult := strings.Split(concat_result, " ")
-	// i = 0
-	// for i < len(strResult)-1 { // removing last element because ther's nothing in
-	// 	resultInt, err := strconv.ParseUint(strResult[i], 2, 64)
-	// 	check(err)
-	// 	s_int = append(s_int, byte(resultInt))
-	// 	i++
-	// }
-	// fmt.Println(s_int)
-	// _, err = newfile.Write(s_int)
-	// check(err)
+
 	writeBytes.Flush()
 	newfile.Close()
 
@@ -460,75 +436,3 @@ func fillMatrixIDOrder() {
 	}
 
 }
-
-// func longStringToIntString(binary string) string {
-// 	var qty_loops int = len(binary) / 8
-// 	var i, j int = 0, 0
-
-// 	var result string = ""
-// 	var copy string = ""
-// 	var tmp string
-// 	for i < qty_loops {
-// 		copy = ""
-// 		j = 0
-// 		for j < 8 {
-// 			copy += string(binary[i*8+j])
-// 			j++
-// 		}
-// 		tmp = parseBinToChar(copy)
-// 		// fmt.Printf(tmp)
-// 		result += tmp
-
-// 		i++
-// 	}
-// 	// fmt.Println()
-// 	return result
-// }
-
-// func reorderMatrix() {
-// 	var i, j uint8
-
-// 	var pos_one uint8
-// 	var sum uint8 = 0
-
-// 	var tmp_matrix []uint8 = make([]uint8, len(matrix[0]))
-// 	var tmp_col []uint8 = make([]uint8, 4)
-
-// 	for i = 0; int(i) < len(matrix[0]); i++ { // we know the index of identity matrix cols
-// 		sum = 0
-// 		for j = 0; j < 4; j++ {
-
-// 			if matrix[j][i] == 1 {
-// 				pos_one = j
-// 				sum += matrix[j][i]
-// 			}
-
-// 		}
-// 		if sum == 1 {
-// 			tmp_matrix[pos_one] = i
-// 		}
-// 	}
-
-// 	tmp_col = tmp_col[:0]
-// 	for j = 0; int(j) < 4; j++ { // 4 : G4 ID matrix length
-// 		for i = 0; i < 4; i++ {
-
-// 			tmp_col = append(tmp_col, matrix[i][j]) //  saving current col in order to swap them in right order
-// 		}
-
-// 		for i = 0; i < 4; i++ {
-
-// 			matrix[i][j] = matrix[i][tmp_matrix[j]]
-// 		}
-
-// 		for i = 0; i < 4; i++ {
-
-// 			matrix[i][tmp_matrix[j]] = tmp_col[i]
-// 		}
-
-// 		tmp_col = tmp_col[:0]
-
-// 	}
-
-// 	// var matrix is now in order
-// }
