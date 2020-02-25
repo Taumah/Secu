@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"math/bits"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -374,38 +375,39 @@ func decryptByte(bytes []byte, size int) {
 	writeBytes := bufio.NewWriter(newfile)
 
 	var i, j, k int = 0, 0, 0
-
+	var bitPos float64
 	//var tmpByte string
-	var leByteDecomp string
-	var leByte1 byte
-	var leByte2 byte
+	var leByteDecomp uint8
 
-	var writtenByte byte
+	// var writtenByte byte
 	fmt.Println(arrayMatrixCondition)
 	for i < size-1 {
-		leByteDecomp = ""
+		leByteDecomp = 0
 
 		// tmpByte = fmt.Sprintf("%08b", leByte)
 
 		// tmpByte = string(tmpByte[4]) + string(tmpByte[1]) + string(tmpByte[2]) + string(tmpByte[3])
 
 		j = 0
+		bitPos = 0
 		for j < 2 {
 			k = 0
 			for k < 4 { //id matrix length
 				condition := uint8(arrayMatrixCondition[k])
 				// fmt.Printf("il faut : %d\n", condition)
 				if bytes[i+j]&condition == condition {
-					leByteDecomp += "1"
-				} else {
-					leByteDecomp += "0"
+					leByteDecomp += uint8(math.Pow(2, bitPos))
 				}
 				k++
+				bitPos++
 			}
 
 			j++
 		}
-		fmt.Printf("lebytedecomp %s \n", leByteDecomp)
+		leByteDecomp = bits.Reverse8(leByteDecomp)
+		// fmt.Printf("fuck %08b\n", leByteDecomp)
+		// fmt.Printf("fuck %08b\n", leByteDecomp)
+		fmt.Printf("lebytedecomp %d et byte %d+ %d \n", leByteDecomp, bytes[i], bytes[i+1])
 		// leByteDecomp = int(leByte&8 == 8) + int(leByte&64 == 64) + int(leByte&32 == 32) + int(leByte&16 == 16)
 
 		//ideally this should be this ligne to adapt to any matrix .... bit long :/
@@ -413,9 +415,9 @@ func decryptByte(bytes []byte, size int) {
 
 		// concatResult += tmpByte
 
-		writtenByte, _ = parseByte(leByteDecomp)
-		fmt.Printf("%d \n", writtenByte)
-		writeBytes.WriteByte(writtenByte)
+		// writtenByte, _ = parseByte(leByteDecomp)
+		// fmt.Printf("%d \n", writtenByte)
+		writeBytes.WriteByte(leByteDecomp)
 		check(err)
 		i += 2
 	}
