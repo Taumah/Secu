@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -46,6 +47,8 @@ var pHeight float64 = HEIGHT / 100
 
 //MatrixIDOrder array representing which bits to extract from byte
 var MatrixIDOrder []uint8 = []uint8{4, 1, 2, 3}
+
+var arrayMatrixCondition []float64 = []float64{0, 0, 0, 0}
 
 //~~~~~~~~~~~~~~~~~PROGRAM DEBUT~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -123,11 +126,9 @@ func run() {
 	}
 }
 func main() {
-	i := 0
-	for i < 255 {
-		fmt.Printf("%c \n", i)
-		i++
-	}
+
+	fmt.Println(125 & 9)
+
 	pixelgl.Run(run)
 }
 
@@ -358,32 +359,46 @@ func decryptByte(reader *bufio.Reader, size int) {
 	newfile, err := os.Create(WorkingDirectory + "/file.txtd")
 	writeBytes := bufio.NewWriter(newfile)
 
-	var i int = 0
-	var concatResult string = ""
-	var tmpByte string
+	var i, j int = 0, 0
 
+	//var tmpByte string
+	var leByteDecomp string
 	var leByte uint8
 
 	var writtenByte byte
+	fmt.Println(arrayMatrixCondition)
 	for i < size {
 		leByte, err = reader.ReadByte()
 		check(err)
 
-		tmpByte = fmt.Sprintf("%08b", leByte)
+		// tmpByte = fmt.Sprintf("%08b", leByte)
 
-		tmpByte = string(tmpByte[4]) + string(tmpByte[1]) + string(tmpByte[2]) + string(tmpByte[3])
+		// tmpByte = string(tmpByte[4]) + string(tmpByte[1]) + string(tmpByte[2]) + string(tmpByte[3])
 
-		leByte = (leByte&8)*2**3 + (leByte&64)*2**6 + (leByte&32)*2**5 + (leByte&16)*2**4
+		j = 0
+		for j < 4 { //id matrix length
+			condition := uint8(arrayMatrixCondition[j])
+			fmt.Printf("il faut : %d\n", condition)
+			if leByte&condition == condition {
+				leByteDecomp += "1"
+			} else {
+				leByteDecomp += "0"
+			}
+			j++
+		}
+		// leByteDecomp = int(leByte&8 == 8) + int(leByte&64 == 64) + int(leByte&32 == 32) + int(leByte&16 == 16)
+
 		//ideally this should be this ligne to adapt to any matrix .... bit long :/
 		// tmpByte = string(tmpByte[MatrixIDOrder[0]]) + string(tmpByte[MatrixIDOrder[1]]) + string(tmpByte[MatrixIDOrder[2]]) + string(tmpByte[MatrixIDOrder[3]])
 
-		concatResult += tmpByte
+		// concatResult += tmpByte
+
 		if i%2 == 1 {
-			writtenByte, _ = parseByte(concatResult)
+			writtenByte, _ = parseByte(leByteDecomp)
 			fmt.Printf("%d \n", writtenByte)
 			writeBytes.WriteByte(writtenByte)
 			check(err)
-			concatResult = ""
+			leByteDecomp = ""
 
 		}
 		i++
@@ -431,6 +446,8 @@ func fillMatrixIDOrder() {
 		}
 		if sum == 1 {
 			MatrixIDOrder[posOne] = i
+			arrayMatrixCondition[posOne] = math.Pow(2, float64(8-i-1))
+			fmt.Println(arrayMatrixCondition[posOne])
 			fmt.Println("result : ", MatrixIDOrder, "new ", posOne)
 		}
 	}
