@@ -45,7 +45,7 @@ var pWidth float64 = WIDTH / 100
 var pHeight float64 = HEIGHT / 100
 
 //MatrixIDOrder array representing which bits to extract from byte
-var MatrixIDOrder []int = []int{5, 2, 3, 4}
+var MatrixIDOrder []uint8 = []uint8{4, 1, 2, 3}
 
 //~~~~~~~~~~~~~~~~~PROGRAM DEBUT~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -123,7 +123,11 @@ func run() {
 	}
 }
 func main() {
-
+	i := 0
+	for i < 255 {
+		fmt.Printf("%c \n", i)
+		i++
+	}
 	pixelgl.Run(run)
 }
 
@@ -148,6 +152,7 @@ func buttonHandler(win *pixelgl.Window) {
 			index, endex = seekKeyIndex(txt)
 			insertMatrix(txt, index, endex)
 			// reorderMatrix()
+			fillMatrixIDOrder()
 
 			IsMatrixSelected = true
 		} else if pos.X > pWidth*65 && pos.X < pWidth*95 { // bot right
@@ -366,26 +371,30 @@ func decryptFile() {
 func decryptByte(reader *bufio.Reader, size int) {
 
 	newfile, err := os.Create(WorkingDirectory + "/file.txtd")
-	writeBytes := bufio.NewWriterSize(newfile, size/2)
+	writeBytes := bufio.NewWriterSize(newfile, (size+10)/2)
 
 	var i int = 0
 	var concatResult string = ""
 	var tmpByte string
 
-	var leByte byte
+	var leByte uint8
 
-	var writtenByte uint8
+	var writtenByte byte
 	for i < size {
 		leByte, err = reader.ReadByte()
+		check(err)
 
 		tmpByte = fmt.Sprintf("%08b", leByte)
 
 		tmpByte = string(tmpByte[4:5]) + string(tmpByte[1:2]) + string(tmpByte[2:3]) + string(tmpByte[3:4])
 
+		//ideally this should be this ligne to adapt to any matrix .... bit long :/
+		// tmpByte = string(tmpByte[MatrixIDOrder[0]]) + string(tmpByte[MatrixIDOrder[1]]) + string(tmpByte[MatrixIDOrder[2]]) + string(tmpByte[MatrixIDOrder[3]])
+
 		concatResult += tmpByte
 		if i%2 == 1 {
 			writtenByte, _ = parseByte(concatResult)
-
+			fmt.Printf("%d \n", writtenByte)
 			writeBytes.WriteByte(writtenByte)
 			check(err)
 			concatResult = ""
@@ -425,9 +434,31 @@ func parseIntToBin(Int int64) string { //smartest result from Stack
 }
 
 func parseByte(intStr string) (retV uint8, err error) {
-	var value int64
-	value, err = strconv.ParseInt(intStr, 2, 8)
-	return byte(value), err
+	var value uint64
+	value, _ = strconv.ParseUint(intStr, 2, 8)
+	return uint8(value), err
+}
+
+func fillMatrixIDOrder() {
+
+	var i, j uint8
+	var sum, posOne uint8
+	for i = 0; int(i) < len(matrix[0]); i++ { // we know the index of identity matrix cols
+		sum = 0
+		for j = 0; j < 4; j++ {
+
+			if matrix[j][i] == 1 {
+				posOne = j
+				sum += matrix[j][i]
+			}
+
+		}
+		if sum == 1 {
+			MatrixIDOrder[posOne] = i
+			fmt.Println("result : ", MatrixIDOrder, "new ", posOne)
+		}
+	}
+
 }
 
 // func longStringToIntString(binary string) string {
