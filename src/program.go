@@ -145,7 +145,9 @@ func buttonHandler(win *pixelgl.Window) {
 				dialog.Message("%s", "Matrix Loaded").Title("Success !!").Info()
 				IsMatrixSelected = true
 			}
-		} else if pos.X > pWidth*65 && pos.X < pWidth*95 { // bot right
+		}
+	} else if pos.Y > pHeight*5 && pos.Y < pHeight*35 {
+		if pos.X > pWidth*65 && pos.X < pWidth*95 { // bot right
 			//decrypt
 			if IsMatrixSelected {
 				decryptFile()
@@ -283,9 +285,11 @@ func encryptFile() {
 
 	var writeTab []byte
 	filename, err := dialog.File().Title("Chose a file to encrypt").Load()
+	name := getFileName(filename)
+	exten := getFileExt(filename)
 	pathCryptedFile, err := dialog.Directory().Title("Chose a directory to save your encrypted file").Browse()
-	err = os.Remove(pathCryptedFile + "/encryptedFile.txtc") // in case it already exists
-	newfile, err := os.Create(pathCryptedFile + "/encryptedFile.txtc")
+	// err = os.Remove(pathCryptedFile + "/encryptedFile.txtc") // in case it already exists
+	newfile, err := os.Create(pathCryptedFile + "/" + name + "." + exten + "c")
 	file, err := os.Open(filename) // read from a file write into another
 	check(err)
 
@@ -316,6 +320,7 @@ func decryptFile() {
 
 	name := getFileName(filename)
 	exten := getFileExt(filename)
+	exten = string(exten[0 : len(exten)-1])
 
 	pathDecryptedFile, err := dialog.Directory().Title("Chose a directory to save your decrypted file").Browse()
 	check(err)
@@ -464,6 +469,6 @@ func getFileExt(filename string) string {
 			break
 		}
 	}
-	ext := string(filename[lastDot+1 : len(filename)-1])
+	ext := string(filename[lastDot+1 : len(filename)])
 	return ext
 }
