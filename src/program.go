@@ -341,47 +341,50 @@ func decryptFile() {
 	var err = os.Remove(WorkingDirectory + "/file.txtd") // in case it already exists
 	// var write_byte []byte
 	file, err := os.Open(WorkingDirectory + "/file.txtc")
-	var b []byte
 	fi, err := file.Stat()
 	fmt.Printf("file size : %d\n", fi.Size())
 
 	check(err)
 
-	// readByte := bufio.NewReaderSize(file, int(fi.Size()))
+	readByte := bufio.NewReaderSize(file, int(fi.Size()))
 
-	scanner := bufio.NewScanner(file)
+	// scanner := bufio.NewScanner(file)
 
 	// Call Split to specify that we want to Scan each individual byte.
-	scanner.Split(bufio.ScanBytes)
+	// scanner.Split(bufio.ScanBytes)
 
 	// Use For-loop.
-	for scanner.Scan() {
-		// Get Bytes and display the byte.
-		b = append(b, scanner.Bytes()[0])
-	}
+	// for scanner.Scan() {
+	// 	// Get Bytes and display the byte.
+	// 	b = append(b, scanner.Bytes()[0])
+	// }
+
 	// _, err = newfile.Write(write_byte)
 	// check(err)
 
-	decryptByte(b, len(b))
+	decryptByte(readByte, fi.Size())
 
 	fmt.Println("file decrypted")
 	file.Close()
 
 }
 
-func decryptByte(bytes []byte, size int) {
+func decryptByte(bytes *bufio.Reader, size int64) {
 
 	newfile, err := os.Create(WorkingDirectory + "/file.txtd")
 	writeBytes := bufio.NewWriter(newfile)
 
-	var i, j, k int = 0, 0, 0
+	var k int = 0
+	var i, j int64 = 0, 0
 	var bitPos float64
 	//var tmpByte string
 	var leByteDecomp uint8
+	var leByteRead uint8
 
 	// var writtenByte byte
 	fmt.Println(arrayMatrixCondition)
 	for i < size-1 {
+
 		leByteDecomp = 0
 
 		// tmpByte = fmt.Sprintf("%08b", leByte)
@@ -392,10 +395,11 @@ func decryptByte(bytes []byte, size int) {
 		bitPos = 0
 		for j < 2 {
 			k = 0
+			leByteRead, _ = bytes.ReadByte()
 			for k < 4 { //id matrix length
 				condition := uint8(arrayMatrixCondition[k])
 				// fmt.Printf("il faut : %d\n", condition)
-				if bytes[i+j]&condition == condition {
+				if leByteRead&condition == condition {
 					leByteDecomp += uint8(math.Pow(2, bitPos))
 				}
 				k++
@@ -405,9 +409,7 @@ func decryptByte(bytes []byte, size int) {
 			j++
 		}
 		leByteDecomp = bits.Reverse8(leByteDecomp)
-		// fmt.Printf("fuck %08b\n", leByteDecomp)
-		// fmt.Printf("fuck %08b\n", leByteDecomp)
-		fmt.Printf("lebytedecomp %d et byte %d+ %d \n", leByteDecomp, bytes[i], bytes[i+1])
+
 		// leByteDecomp = int(leByte&8 == 8) + int(leByte&64 == 64) + int(leByte&32 == 32) + int(leByte&16 == 16)
 
 		//ideally this should be this ligne to adapt to any matrix .... bit long :/
