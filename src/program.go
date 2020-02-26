@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"math/bits"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -127,8 +128,12 @@ func run() {
 }
 func main() {
 
-	fmt.Println(125 & 9)
+	// i := 0
+	// for i < 255 {
+	// 	fmt.Printf("%c\n", i)
+	// 	i++
 
+	// }
 	pixelgl.Run(run)
 }
 
@@ -336,7 +341,6 @@ func decryptFile() {
 	var err = os.Remove(WorkingDirectory + "/file.txtd") // in case it already exists
 	// var write_byte []byte
 	file, err := os.Open(WorkingDirectory + "/file.txtc")
-
 	fi, err := file.Stat()
 	fmt.Printf("file size : %d\n", fi.Size())
 
@@ -344,48 +348,68 @@ func decryptFile() {
 
 	readByte := bufio.NewReaderSize(file, int(fi.Size()))
 
-	decryptByte(readByte, int(fi.Size()))
+	// scanner := bufio.NewScanner(file)
+
+	// Call Split to specify that we want to Scan each individual byte.
+	// scanner.Split(bufio.ScanBytes)
+
+	// Use For-loop.
+	// for scanner.Scan() {
+	// 	// Get Bytes and display the byte.
+	// 	b = append(b, scanner.Bytes()[0])
+	// }
 
 	// _, err = newfile.Write(write_byte)
 	// check(err)
+
+	decryptByte(readByte, fi.Size())
 
 	fmt.Println("file decrypted")
 	file.Close()
 
 }
 
-func decryptByte(reader *bufio.Reader, size int) {
+func decryptByte(bytes *bufio.Reader, size int64) {
 
 	newfile, err := os.Create(WorkingDirectory + "/file.txtd")
 	writeBytes := bufio.NewWriter(newfile)
 
-	var i, j int = 0, 0
-
+	var k int = 0
+	var i, j int64 = 0, 0
+	var bitPos float64
 	//var tmpByte string
-	var leByteDecomp string
-	var leByte uint8
+	var leByteDecomp uint8
+	var leByteRead uint8
 
-	var writtenByte byte
+	// var writtenByte byte
 	fmt.Println(arrayMatrixCondition)
-	for i < size {
-		leByte, err = reader.ReadByte()
-		check(err)
+	for i < size-1 {
+
+		leByteDecomp = 0
 
 		// tmpByte = fmt.Sprintf("%08b", leByte)
 
 		// tmpByte = string(tmpByte[4]) + string(tmpByte[1]) + string(tmpByte[2]) + string(tmpByte[3])
 
 		j = 0
-		for j < 4 { //id matrix length
-			condition := uint8(arrayMatrixCondition[j])
-			fmt.Printf("il faut : %d\n", condition)
-			if leByte&condition == condition {
-				leByteDecomp += "1"
-			} else {
-				leByteDecomp += "0"
+		bitPos = 0
+		for j < 2 {
+			k = 0
+			leByteRead, _ = bytes.ReadByte()
+			for k < 4 { //id matrix length
+				condition := uint8(arrayMatrixCondition[k])
+				// fmt.Printf("il faut : %d\n", condition)
+				if leByteRead&condition == condition {
+					leByteDecomp += uint8(math.Pow(2, bitPos))
+				}
+				k++
+				bitPos++
 			}
+
 			j++
 		}
+		leByteDecomp = bits.Reverse8(leByteDecomp)
+
 		// leByteDecomp = int(leByte&8 == 8) + int(leByte&64 == 64) + int(leByte&32 == 32) + int(leByte&16 == 16)
 
 		//ideally this should be this ligne to adapt to any matrix .... bit long :/
@@ -393,15 +417,11 @@ func decryptByte(reader *bufio.Reader, size int) {
 
 		// concatResult += tmpByte
 
-		if i%2 == 1 {
-			writtenByte, _ = parseByte(leByteDecomp)
-			fmt.Printf("%d \n", writtenByte)
-			writeBytes.WriteByte(writtenByte)
-			check(err)
-			leByteDecomp = ""
-
-		}
-		i++
+		// writtenByte, _ = parseByte(leByteDecomp)
+		// fmt.Printf("%d \n", writtenByte)
+		writeBytes.WriteByte(leByteDecomp)
+		check(err)
+		i += 2
 	}
 
 	writeBytes.Flush()
