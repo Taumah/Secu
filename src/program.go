@@ -65,23 +65,15 @@ func run() {
 	//~~~~~~~~~~~~~~~~~~~~~~~DESSIN DES BOUTONS~~~~~~~~~~~~~~~~~~~~~~~
 	imd.Color = colornames.Navy
 
-	imd.Push(pixel.V(pWidth*5, pHeight*5), pixel.V(pWidth*35, pHeight*35)) // vertices for rect1 (bottom left)
+	imd.Push(pixel.V(pWidth*5, pHeight*35), pixel.V(pWidth*40, pHeight*75)) // vertices for rect1 (bottom left)
 	imd.Rectangle(0)
 
-	imd.Push(pixel.V(pWidth*95, pHeight*5), pixel.V(pWidth*65, pHeight*35)) // bottom right
-	imd.Rectangle(0)
-
-	imd.Push(pixel.V(pWidth*5, pHeight*95), pixel.V(pWidth*35, pHeight*65)) // top left
-	imd.Rectangle(0)
-
-	imd.Push(pixel.V(pWidth*95, pHeight*95), pixel.V(pWidth*65, pHeight*65)) //(top right)
-	imd.Rectangle(0)
 	//~~~~~~~~~~~~~~~~~~~~~~~ECRITURE DES TEXTES~~~~~~~~~~~~~~~~~~~~~~
 
 	basicAtlas := text.NewAtlas(basicfont.Face7x13, text.ASCII)
 
 	//Texte bouton charger matrice
-	basicText := text.New(pixel.V(pWidth*13, pHeight*18), basicAtlas)
+	basicText := text.New(pixel.V(pWidth*8, pHeight*55), basicAtlas)
 	basicText.Color = colornames.Limegreen
 	fmt.Fprintln(basicText, "1 - Charger Matrice")
 
@@ -101,25 +93,27 @@ func run() {
 		win.Clear(colornames.Aliceblue)
 
 		imd.Draw(win)
-		basicText.Draw(win, pixel.IM)
-		basicText2.Draw(win, pixel.IM)
-		basicText3.Draw(win, pixel.IM)
+		basicText.Draw(win, pixel.IM.Scaled(basicText.Orig, 2))
 
 		if win.JustPressed(pixelgl.MouseButtonLeft) {
 			buttonHandler(win)
+		}
+
+		if IsMatrixSelected == true {
+			imd.Push(pixel.V(pWidth*95, pHeight*5), pixel.V(pWidth*65, pHeight*35)) // bottom right
+			imd.Rectangle(0)
+
+			imd.Push(pixel.V(pWidth*95, pHeight*95), pixel.V(pWidth*65, pHeight*65)) //(top right)
+			imd.Rectangle(0)
+
+			basicText2.Draw(win, pixel.IM.Scaled(basicText2.Orig, 2))
+			basicText3.Draw(win, pixel.IM.Scaled(basicText3.Orig, 2))
 		}
 
 		win.Update()
 	}
 }
 func main() {
-
-	// i := 0
-	// for i < 255 {
-	// 	fmt.Printf("%c\n", i)
-	// 	i++
-
-	// }
 	pixelgl.Run(run)
 }
 
@@ -127,26 +121,30 @@ func buttonHandler(win *pixelgl.Window) {
 
 	pos := win.MousePosition()
 
-	if pos.Y > pHeight*5 && pos.Y < pHeight*35 { // clic bot
+	if pos.Y > pHeight*35 && pos.Y < pHeight*75 { // clic bot
 
-		if pos.X > pWidth*5 && pos.X < pWidth*35 { // bot left
+		if pos.X > pWidth*5 && pos.X < pWidth*40 { // bot left
 			//insert matrix
 			var index, endex uint8
 			MatrixPath, err := dialog.File().Filter("Fichier Texte", "txt").Load()
 			check(err)
 			data, err := os.Open(MatrixPath)
 			check(err)
-			dialog.Message("%s", "Matrix Loaded").Title("Success !!").Info()
 			txt := make([]byte, 100)
 			_, err = data.Read(txt)
 			check(err)
 
 			index, endex = seekKeyIndex(txt)
-			insertMatrix(txt, index, endex)
-			// reorderMatrix()
-			fillMatrixIDOrder()
-
-			IsMatrixSelected = true
+			if endex == 0 {
+				dialog.Message("%s", "Mauvais format de matrice, veuillez ressayer").Title("Aie aie aie").Info()
+				IsMatrixSelected = false
+			} else {
+				insertMatrix(txt, index, endex)
+				// reorderMatrix()
+				fillMatrixIDOrder()
+				dialog.Message("%s", "Matrix Loaded").Title("Success !!").Info()
+				IsMatrixSelected = true
+			}
 		} else if pos.X > pWidth*65 && pos.X < pWidth*95 { // bot right
 			//decrypt
 			if IsMatrixSelected {
@@ -201,7 +199,9 @@ func seekKeyIndex(data []byte) (uint8, uint8) {
 			endex = i
 		}
 	}
-
+	if endex-index != 35 {
+		return index, 0
+	}
 	return index, endex
 
 }
@@ -435,19 +435,16 @@ func fillMatrixIDOrder() {
 	for i = 0; int(i) < len(matrix[0]); i++ { // we know the index of identity matrix cols
 		sum = 0
 		for j = 0; j < 4; j++ {
-
 			if matrix[j][i] == 1 {
 				posOne = j
 				sum += matrix[j][i]
 			}
-
 		}
 		if sum == 1 {
 			MatrixIDOrder[posOne] = i
 			arrayMatrixCondition[posOne] = math.Pow(2, float64(8-i-1))
-			fmt.Println(arrayMatrixCondition[posOne])
-			fmt.Println("result : ", MatrixIDOrder, "new ", posOne)
+			//fmt.Println(arrayMatrixCondition[posOne])
+			// fmt.Println("result : ", MatrixIDOrder, "new ", posOne)
 		}
 	}
-
 }
