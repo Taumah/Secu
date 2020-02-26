@@ -314,42 +314,27 @@ func decryptFile() {
 
 	filename, err := dialog.File().Title("Chose a file to decrypt").Load()
 
+	name := getFileName(filename)
+	exten := getFileExt(filename)
+
 	pathDecryptedFile, err := dialog.Directory().Title("Chose a directory to save your decrypted file").Browse()
 	check(err)
-	// err = os.Remove(pathDecryptedFile + "/decryptedFile.txtd") // in case it already exists
-	// check(err)
-	// var write_byte []byte
 	file, err := os.Open(filename)
 	fi, err := file.Stat()
 	fmt.Printf("file size : %d\n", fi.Size())
 	check(err)
 
 	readByte := bufio.NewReaderSize(file, int(fi.Size()))
-
-	// scanner := bufio.NewScanner(file)
-
-	// Call Split to specify that we want to Scan each individual byte.
-	// scanner.Split(bufio.ScanBytes)
-
-	// Use For-loop.
-	// for scanner.Scan() {
-	// 	// Get Bytes and display the byte.
-	// 	b = append(b, scanner.Bytes()[0])
-	// }
-
-	// _, err = newfile.Write(write_byte)
-	// check(err)
-
-	decryptByte(readByte, fi.Size(), pathDecryptedFile)
+	decryptByte(readByte, fi.Size(), pathDecryptedFile, name, exten)
 
 	dialog.Message("%s", "File decrypted").Title("Success !!").Info()
 	file.Close()
 
 }
 
-func decryptByte(bytes *bufio.Reader, size int64, path string) {
+func decryptByte(bytes *bufio.Reader, size int64, path string, name string, exten string) {
 
-	newfile, err := os.Create(path + "/file.txtd")
+	newfile, err := os.Create(path + "/" + name + "." + exten + "d")
 	writeBytes := bufio.NewWriter(newfile)
 
 	var k int = 0
@@ -447,4 +432,38 @@ func fillMatrixIDOrder() {
 			// fmt.Println("result : ", MatrixIDOrder, "new ", posOne)
 		}
 	}
+}
+
+func getFileName(filename string) string {
+	var i int
+	var lastSlash int
+	var beforeName int
+
+	for i = 0; i < len(filename); i++ {
+		if filename[i] == 92 {
+			lastSlash = i
+		}
+	}
+
+	for i = len(filename) - 1; i > lastSlash; i-- {
+		if filename[i] == 46 {
+			beforeName = i
+		}
+	}
+	name := string(filename[lastSlash+1 : beforeName])
+	return name
+}
+
+func getFileExt(filename string) string {
+	var i int
+	var lastDot int
+
+	for i = len(filename) - 1; i > len(filename)-7; i-- {
+		if filename[i] == 46 {
+			lastDot = i
+			break
+		}
+	}
+	ext := string(filename[lastDot+1 : len(filename)-1])
+	return ext
 }
