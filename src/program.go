@@ -220,14 +220,14 @@ func clearMatrix() {
 	}
 }
 
-func encryptByte(bytes *bufio.Reader, length int) {
+func encryptByte(bytes *bufio.Reader, length int, pathToCreate string) {
 	var i, j int = 0, 0
 	var byteNum int = 0
 	// var futureByte [2]byte
 
 	var cutByte [2]byte
 	var condition uint8 = 0 //use to know if any bit is on/off
-	newfile, _ := os.Create(WorkingDirectory + "/file.txtc")
+	newfile, _ := os.Create(pathToCreate)
 	writeBytes := bufio.NewWriter(newfile)
 
 	for byteNum < length {
@@ -280,15 +280,15 @@ func encryptFile() {
 	file, err := os.Open(filename) // read from a file write into another
 	check(err)
 
-	/* 	write_tab = []byte{126}
-	   	_, err = newfile.Write(write_tab) */ //permet de rentrer à la main 1 char , pour voir les effets
-
 	fi, err := file.Stat()
 	check(err)
 
 	bufferReader := bufio.NewReaderSize(file, int(fi.Size()))
 
-	encryptByte(bufferReader, int(fi.Size()))
+	newfile.Close()
+
+	path := pathCryptedFile + "/" + name + "." + exten + "c"
+	encryptByte(bufferReader, int(fi.Size()), path)
 
 	dialog.Message("%s", "File encrypted").Title("Success !!").Info()
 }
