@@ -7,6 +7,7 @@ import (
 	"math/bits"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
@@ -309,9 +310,12 @@ func decryptFile() {
 	check(err)
 
 	readByte := bufio.NewReaderSize(file, int(fi.Size()))
+	start := time.Now()
 	decryptByte(readByte, fi.Size(), pathDecryptedFile, name, exten)
-
+	t := time.Now()
+	elapsed := t.Sub(start)
 	dialog.Message("%s", "File decrypted").Title("Success !!").Info()
+	fmt.Printf("%.0f", elapsed.Seconds())
 	file.Close()
 
 }
