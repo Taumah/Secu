@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -48,6 +47,9 @@ var pHeight float64 = HEIGHT / 100
 
 //MatrixIDOrder array representing which bits to extract from byte
 var MatrixIDOrder []uint8 = []uint8{4, 1, 2, 3}
+
+//MatrixValuesAsLine each element is a matrix line represented like a byte (easier to manipulate)
+var MatrixValuesAsLine []uint8 = []uint8{0, 0, 0, 0}
 
 var arrayMatrixCondition []float64 = []float64{0, 0, 0, 0}
 
@@ -127,13 +129,7 @@ func run() {
 	}
 }
 func main() {
-
-	// i := 0
-	// for i < 255 {
-	// 	fmt.Printf("%c\n", i)
-	// 	i++
-
-	// }
+	// fmt.Println(0 ^ 1 ^ 0 ^ 1 ^ 0 ^ 0 ^ 1)
 	pixelgl.Run(run)
 }
 
@@ -157,7 +153,7 @@ func buttonHandler(win *pixelgl.Window) {
 
 			index, endex = seekKeyIndex(txt)
 			insertMatrix(txt, index, endex)
-			// reorderMatrix()
+			fillMatrixValueLine(txt, index, endex)
 			fillMatrixIDOrder()
 
 			IsMatrixSelected = true
@@ -244,96 +240,70 @@ func clearMatrix() {
 	}
 }
 
-func encryptByte(theBytes []byte, length int) []byte {
-	j, byteNum, loop := 0, 0, 0
-	var i int
+func encryptByte(bytes *bufio.Reader, length int) {
+	var i, j int = 0, 0
+	var byteNum int = 0
+	// var futureByte [2]byte
 
-	var result string = ""
-	var copyByte string = ""
-	var bytes [2]string
-	var sum int
-	var strResult []string
-	var resultInt uint64
-	var sInt []byte
+	var cutByte [2]byte
+	var condition uint8 = 0 //use to know if any bit is on/off
+	newfile, _ := os.Create(WorkingDirectory + "/file.txtc")
+	writeBytes := bufio.NewWriter(newfile)
 
 	for byteNum < length {
-		tmpByte := strconv.FormatInt(int64(theBytes[byteNum]), 2)
-		i = len(tmpByte)
+		// futureByte = 0
+		theReadByte, err := bytes.ReadByte()
+		check(err)
+		cutByte[0] = 0
+		cutByte[1] = 0
+		i = 0
 
-		for i < 8 {
-			copyByte += "0" // all bytes set to length 8
-			i++
-		}
-		tmpByte = copyByte + tmpByte
-		//text translated to binary OK
-		bytes[0] = tmpByte[0:4]
-		bytes[1] = tmpByte[4:8] // G4C matrix, every int coded on 8bites -> twice 4bits
-		copyByte = ""
-		loop = 0
-		for loop < 2 { // len(bytes) = 2 at any run
-			for i = 0; i < len(matrix[0]); i++ {
+		condition = 0b10000000
+		for i < 2 {
+			j = 0
+			for j < 4 {
+				// fmt.Printf("%d & %d : %b \n", theReadByte, condition, (theReadByte&condition) == condition)
+				// (theReadByte & condition) == condition
 
-				sum = 0
-				for j = 0; j < 4; j++ {
-					if matrix[j][i] == 1 && bytes[loop][j] == 49 {
-						sum++ // simulating XOR
-					}
+				if (theReadByte & condition) == condition {
+					cutByte[i] ^= MatrixValuesAsLine[j]
+					// fmt.Printf("%d cutByte apres %08b (%d)\n", byteNum, cutByte[i], cutByte[i])
+					// fmt.Printf("%v \n", cutByte)
+
 				}
-				copyByte += strconv.Itoa(sum % 2) // end XOR
+				condition >>= 1
+				j++
 			}
+			// fmt.Println()
 
-			loop++
-			copyByte += " "
+			// fmt.Println("écriture:  ", cutByte[i])
+			writeBytes.WriteByte(cutByte[i])
+			i++
+
 		}
-		// fmt.Printf("%d apres passage donne %s ", the_bytes, copy_byte)
-
-		result += copyByte
-		copyByte = ""
 
 		byteNum++
 	}
-	strResult = strings.Split(result, " ")
-	i = 0
-	for i < len(strResult)-1 { // removing last element because ther's nothing in
-		// fmt.Printf("%s\n", strResult[i])
-		// result += longStringToIntString(strResult[i])
-		resultInt, err = strconv.ParseUint(strResult[i], 2, 64)
-		check(err)
-		sInt = append(sInt, byte(resultInt))
-		// fmt.Printf("%d\n", resultInt)
-
-		i++
-	}
-	return sInt
+	writeBytes.Flush()
 
 }
 
 func encryptFile() {
 	var err = os.Remove(WorkingDirectory + "/file.txtc") // in case it already exists
-	var writeTab []byte
-	newfile, err := os.Create(WorkingDirectory + "/file.txtc")
 
 	file, err := os.Open(WorkingDirectory + "/file.txt") // read from a file write into another
 	check(err)
 
 	/* 	write_tab = []byte{126}
 	   	_, err = newfile.Write(write_tab) */ //permet de rentrer à la main 1 char , pour voir les effets
-	currentByte := make([]byte, 1)
-	for {
-		//lecture d'un byte
-		readByte, err := file.Read(currentByte)
-		if err != nil {
-			break
-		}
 
-		//cryptage d'un byte
-		writeTab = encryptByte(currentByte, readByte)
-		//ecriture d'un byte
-		// fmt.Printf("%v", write_tab)
-		_, err = newfile.Write(writeTab)
-		check(err)
+	fi, err := file.Stat()
+	check(err)
 
-	}
+	bufferReader := bufio.NewReaderSize(file, int(fi.Size()))
+
+	encryptByte(bufferReader, int(fi.Size()))
+
 	fmt.Println("file encrypted")
 }
 
@@ -342,25 +312,10 @@ func decryptFile() {
 	// var write_byte []byte
 	file, err := os.Open(WorkingDirectory + "/file.txtc")
 	fi, err := file.Stat()
-	fmt.Printf("file size : %d\n", fi.Size())
 
 	check(err)
 
 	readByte := bufio.NewReaderSize(file, int(fi.Size()))
-
-	// scanner := bufio.NewScanner(file)
-
-	// Call Split to specify that we want to Scan each individual byte.
-	// scanner.Split(bufio.ScanBytes)
-
-	// Use For-loop.
-	// for scanner.Scan() {
-	// 	// Get Bytes and display the byte.
-	// 	b = append(b, scanner.Bytes()[0])
-	// }
-
-	// _, err = newfile.Write(write_byte)
-	// check(err)
 
 	decryptByte(readByte, fi.Size())
 
@@ -382,23 +337,15 @@ func decryptByte(bytes *bufio.Reader, size int64) {
 	var leByteRead uint8
 
 	// var writtenByte byte
-	fmt.Println(arrayMatrixCondition)
+	// fmt.Println(arrayMatrixCondition)
 	for i < size-1 {
 
-		leByteDecomp = 0
-
-		// tmpByte = fmt.Sprintf("%08b", leByte)
-
-		// tmpByte = string(tmpByte[4]) + string(tmpByte[1]) + string(tmpByte[2]) + string(tmpByte[3])
-
-		j = 0
-		bitPos = 0
+		leByteDecomp, j, bitPos = 0, 0, 0
 		for j < 2 {
 			k = 0
 			leByteRead, _ = bytes.ReadByte()
 			for k < 4 { //id matrix length
 				condition := uint8(arrayMatrixCondition[k])
-				// fmt.Printf("il faut : %d\n", condition)
 				if leByteRead&condition == condition {
 					leByteDecomp += uint8(math.Pow(2, bitPos))
 				}
@@ -410,15 +357,6 @@ func decryptByte(bytes *bufio.Reader, size int64) {
 		}
 		leByteDecomp = bits.Reverse8(leByteDecomp)
 
-		// leByteDecomp = int(leByte&8 == 8) + int(leByte&64 == 64) + int(leByte&32 == 32) + int(leByte&16 == 16)
-
-		//ideally this should be this ligne to adapt to any matrix .... bit long :/
-		// tmpByte = string(tmpByte[MatrixIDOrder[0]]) + string(tmpByte[MatrixIDOrder[1]]) + string(tmpByte[MatrixIDOrder[2]]) + string(tmpByte[MatrixIDOrder[3]])
-
-		// concatResult += tmpByte
-
-		// writtenByte, _ = parseByte(leByteDecomp)
-		// fmt.Printf("%d \n", writtenByte)
 		writeBytes.WriteByte(leByteDecomp)
 		check(err)
 		i += 2
@@ -426,7 +364,6 @@ func decryptByte(bytes *bufio.Reader, size int64) {
 
 	writeBytes.Flush()
 	newfile.Close()
-
 }
 
 func parseBinToChar(s string) string { //smartest result from Stack
@@ -467,9 +404,21 @@ func fillMatrixIDOrder() {
 		if sum == 1 {
 			MatrixIDOrder[posOne] = i
 			arrayMatrixCondition[posOne] = math.Pow(2, float64(8-i-1))
-			fmt.Println(arrayMatrixCondition[posOne])
-			fmt.Println("result : ", MatrixIDOrder, "new ", posOne)
+			// fmt.Println(arrayMatrixCondition[posOne])
+			// fmt.Println("result : ", MatrixIDOrder, "new ", posOne)
 		}
 	}
 
+}
+
+func fillMatrixValueLine(file []byte, index uint8, endex uint8) {
+
+	i := index
+	var caseNb uint8 = 0
+	for i < endex-1 {
+		MatrixValuesAsLine[caseNb], err = parseByte(fmt.Sprintf("%s", file[i:i+8]))
+		check(err)
+		i += 9
+		caseNb++
+	}
 }
