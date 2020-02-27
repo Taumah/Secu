@@ -289,9 +289,14 @@ func encryptFile() {
 	newfile.Close()
 
 	path := pathCryptedFile + "/" + name + "." + exten + "c"
+	start := time.Now()
 	encryptByte(bufferReader, int(fi.Size()), path)
 
+	t := time.Now()
+	elapsed := t.Sub(start)
+
 	dialog.Message("%s", "File encrypted").Title("Success !!").Info()
+	fmt.Printf("%.0f", elapsed.Seconds())
 }
 
 func decryptFile() {
